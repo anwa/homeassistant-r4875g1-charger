@@ -37,6 +37,10 @@ The backend refreshes the active runtime mapping after Home Assistant entity-reg
 
 No charger safety or control logic is implemented here.
 
+## Language policy
+
+Source code, commit messages and project documentation are maintained in English. Home Assistant user-interface translations are maintained in at least English and German, and both translation files must stay in sync when user-facing strings change.
+
 ## Capability groups
 
 Required capabilities:
