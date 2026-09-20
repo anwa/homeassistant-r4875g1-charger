@@ -2,9 +2,11 @@
 
 Home Assistant backend integration for the R4875G1 three-phase charger project.
 
-## Development status
+## Release status
 
-This repository is in early development.
+Version 1.0.0 is the first stable backend release. It freezes Backend API v1 for the planned R4875G1 Home Assistant dashboard while keeping Charger Controller firmware and Home Assistant Contract versioning independent.
+
+The backend is considered stable for the documented Contract-1 discovery, runtime, control and live-subscription interfaces. The dashboard frontend, external battery-bank discovery and history/trend presentation are separate project milestones and are not part of this backend release.
 
 The backend currently provides:
 
@@ -102,8 +104,18 @@ Firmware and the authoritative semantic contract are maintained in:
 
 The planned dashboard frontend will be maintained separately from this backend integration.
 
-## Installation during development
+## Backend API compatibility
+
+The documented WebSocket commands, semantic role identifiers and subscription event structures form Backend API v1.
+
+For releases in the 1.x series:
+
+- existing documented v1 commands and fields remain compatible
+- additive fields, roles and endpoints may be introduced without breaking existing v1 consumers
+- a breaking change to the documented backend API requires a new major integration version
+
+Home Assistant Contract 1 is a separate compatibility boundary between the firmware and this integration. The integration package version does not replace the firmware contract version.
+
+## Installation
 
 Add this repository to HACS as a custom integration repository, install **R4875G1 Charger**, restart Home Assistant and add the integration from **Settings -> Devices & services**.
-
-The integration is not yet intended as a production release.
