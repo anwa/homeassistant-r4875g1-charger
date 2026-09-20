@@ -13,6 +13,7 @@ class RoleSpec:
     role: str
     domain: str
     original_name: str
+    capability: str
     required: bool = True
 
 
@@ -35,6 +36,41 @@ class ResolvedRole:
             "original_name": self.original_name,
             "disabled": self.disabled,
             "unique_id_sha256": _hash_unique_id(self.unique_id),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CapabilityResolution:
+    """Describe one resolved Charger Instance capability."""
+
+    name: str
+    required: bool
+    status: str
+    expected_roles: int
+    usable_roles: int
+    missing_roles: tuple[str, ...]
+    disabled_roles: tuple[str, ...]
+    ambiguous_roles: dict[str, tuple[str, ...]]
+
+    @property
+    def available(self) -> bool:
+        """Return whether every role required by the capability is usable."""
+        return self.status == "available"
+
+    def as_diagnostics(self) -> dict[str, object]:
+        """Return diagnostics-safe capability data."""
+        return {
+            "required": self.required,
+            "status": self.status,
+            "available": self.available,
+            "expected_roles": self.expected_roles,
+            "usable_roles": self.usable_roles,
+            "missing_roles": list(self.missing_roles),
+            "disabled_roles": list(self.disabled_roles),
+            "ambiguous_roles": {
+                role: list(entity_ids)
+                for role, entity_ids in sorted(self.ambiguous_roles.items())
+            },
         }
 
 
@@ -71,17 +107,22 @@ class ChargerResolution:
     stable_identifier: str
     firmware_version: str | None
     contract_version: str | None
+    contract_supported: bool
     roles: dict[str, ResolvedRole]
+    capabilities: dict[str, CapabilityResolution]
     missing_required_roles: tuple[str, ...]
     disabled_required_roles: tuple[str, ...]
     ambiguous_required_roles: dict[str, tuple[str, ...]]
+    missing_optional_roles: tuple[str, ...]
+    disabled_optional_roles: tuple[str, ...]
+    ambiguous_optional_roles: dict[str, tuple[str, ...]]
     registry_inventory: tuple[RegistryObservation, ...]
 
     @property
     def compatible(self) -> bool:
-        """Return whether the bootstrap Contract-1 mapping is usable."""
+        """Return whether the Contract-1 mapping is usable."""
         return (
-            self.contract_version is not None
+            self.contract_supported
             and not self.missing_required_roles
             and not self.disabled_required_roles
             and not self.ambiguous_required_roles
@@ -97,7 +138,13 @@ class ChargerResolution:
                 "firmware_version": self.firmware_version,
             },
             "contract_version": self.contract_version,
+            "contract_supported": self.contract_supported,
             "compatible": self.compatible,
+            "resolved_role_count": len(self.roles),
+            "capabilities": {
+                name: capability.as_diagnostics()
+                for name, capability in sorted(self.capabilities.items())
+            },
             "resolved_roles": {
                 role: resolved.as_diagnostics()
                 for role, resolved in sorted(self.roles.items())
@@ -108,6 +155,14 @@ class ChargerResolution:
                 role: list(entity_ids)
                 for role, entity_ids in sorted(
                     self.ambiguous_required_roles.items()
+                )
+            },
+            "missing_optional_roles": list(self.missing_optional_roles),
+            "disabled_optional_roles": list(self.disabled_optional_roles),
+            "ambiguous_optional_roles": {
+                role: list(entity_ids)
+                for role, entity_ids in sorted(
+                    self.ambiguous_optional_roles.items()
                 )
             },
             "registry_inventory": [

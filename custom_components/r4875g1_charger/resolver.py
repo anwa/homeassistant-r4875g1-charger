@@ -14,8 +14,13 @@ from .const import (
     ESPHOME_DOMAIN,
     SUPPORTED_CONTRACT_VERSIONS,
 )
-from .models import ChargerResolution, RegistryObservation, ResolvedRole
-from .role_specs import BOOTSTRAP_ROLE_SPECS
+from .models import (
+    CapabilityResolution,
+    ChargerResolution,
+    RegistryObservation,
+    ResolvedRole,
+)
+from .role_specs import CAPABILITY_REQUIREMENTS, CONTRACT_ROLE_SPECS
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,29 +81,30 @@ def resolve_charger(
         for entry in sorted(entries, key=lambda item: item.entity_id)
     )
 
-    resolved_roles: dict[str, ResolvedRole] = {}
-    missing_required: list[str] = []
-    disabled_required: list[str] = []
-    ambiguous_required: dict[str, tuple[str, ...]] = {}
+    entries_by_identity: dict[tuple[str, str | None], list[er.RegistryEntry]] = {}
+    for entry in entries:
+        key = (_entity_domain(entry.entity_id), entry.original_name)
+        entries_by_identity.setdefault(key, []).append(entry)
 
-    for spec in BOOTSTRAP_ROLE_SPECS:
-        candidates = [
-            entry
-            for entry in entries
-            if _entity_domain(entry.entity_id) == spec.domain
-            and entry.original_name == spec.original_name
-        ]
+    resolved_roles: dict[str, ResolvedRole] = {}
+    missing_roles: set[str] = set()
+    disabled_roles: set[str] = set()
+    ambiguous_roles: dict[str, tuple[str, ...]] = {}
+
+    for spec in CONTRACT_ROLE_SPECS:
+        candidates = entries_by_identity.get(
+            (spec.domain, spec.original_name),
+            [],
+        )
 
         if not candidates:
-            if spec.required:
-                missing_required.append(spec.role)
+            missing_roles.add(spec.role)
             continue
 
         if len(candidates) > 1:
-            if spec.required:
-                ambiguous_required[spec.role] = tuple(
-                    sorted(entry.entity_id for entry in candidates)
-                )
+            ambiguous_roles[spec.role] = tuple(
+                sorted(entry.entity_id for entry in candidates)
+            )
             continue
 
         entry = candidates[0]
@@ -113,8 +119,38 @@ def resolve_charger(
             disabled=disabled,
         )
 
-        if spec.required and disabled:
-            disabled_required.append(spec.role)
+        if disabled:
+            disabled_roles.add(spec.role)
+
+    required_roles = {
+        spec.role for spec in CONTRACT_ROLE_SPECS if spec.required
+    }
+    optional_roles = {
+        spec.role for spec in CONTRACT_ROLE_SPECS if not spec.required
+    }
+
+    missing_required = tuple(sorted(missing_roles & required_roles))
+    disabled_required = tuple(sorted(disabled_roles & required_roles))
+    ambiguous_required = {
+        role: entity_ids
+        for role, entity_ids in sorted(ambiguous_roles.items())
+        if role in required_roles
+    }
+
+    missing_optional = tuple(sorted(missing_roles & optional_roles))
+    disabled_optional = tuple(sorted(disabled_roles & optional_roles))
+    ambiguous_optional = {
+        role: entity_ids
+        for role, entity_ids in sorted(ambiguous_roles.items())
+        if role in optional_roles
+    }
+
+    capabilities = _resolve_capabilities(
+        resolved_roles,
+        missing_roles,
+        disabled_roles,
+        ambiguous_roles,
+    )
 
     contract_version = configured_contract_version
     contract_role = resolved_roles.get(CONTRACT_ROLE)
@@ -127,6 +163,8 @@ def resolve_charger(
             "",
         ):
             contract_version = state.state
+
+    contract_supported = contract_version in SUPPORTED_CONTRACT_VERSIONS
 
     device_name = (
         device.name_by_user
@@ -142,10 +180,15 @@ def resolve_charger(
         stable_identifier=stable_identifier,
         firmware_version=device.sw_version,
         contract_version=contract_version,
+        contract_supported=contract_supported,
         roles=resolved_roles,
-        missing_required_roles=tuple(sorted(missing_required)),
-        disabled_required_roles=tuple(sorted(disabled_required)),
+        capabilities=capabilities,
+        missing_required_roles=missing_required,
+        disabled_required_roles=disabled_required,
         ambiguous_required_roles=ambiguous_required,
+        missing_optional_roles=missing_optional,
+        disabled_optional_roles=disabled_optional,
+        ambiguous_optional_roles=ambiguous_optional,
         registry_inventory=inventory,
     )
 
@@ -155,7 +198,7 @@ def validate_resolution_for_setup(resolution: ChargerResolution) -> str | None:
     if resolution.contract_version is None:
         return "contract_unavailable"
 
-    if resolution.contract_version not in SUPPORTED_CONTRACT_VERSIONS:
+    if not resolution.contract_supported:
         return "unsupported_contract"
 
     if resolution.ambiguous_required_roles:
@@ -168,6 +211,63 @@ def validate_resolution_for_setup(resolution: ChargerResolution) -> str | None:
         return "missing_required_roles"
 
     return None
+
+
+def _resolve_capabilities(
+    resolved_roles: dict[str, ResolvedRole],
+    missing_roles: set[str],
+    disabled_roles: set[str],
+    ambiguous_roles: dict[str, tuple[str, ...]],
+) -> dict[str, CapabilityResolution]:
+    """Build explicit capability state from the semantic role map."""
+    capabilities: dict[str, CapabilityResolution] = {}
+
+    for capability_name, capability_required in CAPABILITY_REQUIREMENTS.items():
+        specs = tuple(
+            spec
+            for spec in CONTRACT_ROLE_SPECS
+            if spec.capability == capability_name
+        )
+
+        capability_roles = {spec.role for spec in specs}
+        capability_missing = tuple(
+            sorted(capability_roles & missing_roles)
+        )
+        capability_disabled = tuple(
+            sorted(capability_roles & disabled_roles)
+        )
+        capability_ambiguous = {
+            role: entity_ids
+            for role, entity_ids in sorted(ambiguous_roles.items())
+            if role in capability_roles
+        }
+
+        usable_roles = sum(
+            1
+            for spec in specs
+            if spec.role in resolved_roles
+            and spec.role not in disabled_roles
+        )
+
+        if usable_roles == len(specs):
+            status = "available"
+        elif usable_roles == 0:
+            status = "unavailable"
+        else:
+            status = "partial"
+
+        capabilities[capability_name] = CapabilityResolution(
+            name=capability_name,
+            required=capability_required,
+            status=status,
+            expected_roles=len(specs),
+            usable_roles=usable_roles,
+            missing_roles=capability_missing,
+            disabled_roles=capability_disabled,
+            ambiguous_roles=capability_ambiguous,
+        )
+
+    return capabilities
 
 
 def _stable_esphome_identifier(device: dr.DeviceEntry) -> str:

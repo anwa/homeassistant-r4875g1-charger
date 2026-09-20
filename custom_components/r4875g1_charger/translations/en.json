@@ -8,7 +8,7 @@
       "contract_unavailable": "The Charger Controller contract marker is unavailable. Make sure the controller is online and try again.",
       "device_not_found": "The selected Home Assistant device no longer exists.",
       "disabled_required_roles": "One or more required Charger Controller entities are disabled in Home Assistant.",
-      "missing_required_roles": "The selected ESPHome device does not expose all required bootstrap charger entities.",
+      "missing_required_roles": "The selected ESPHome device does not expose all required Home Assistant Contract-1 charger entities.",
       "missing_source_config_entry": "The selected device is not attached to a Home Assistant config entry.",
       "missing_stable_identifier": "The selected ESPHome device does not expose the stable MAC identifier required by this integration.",
       "not_esphome_device": "The selected device is not owned by the ESPHome integration.",
