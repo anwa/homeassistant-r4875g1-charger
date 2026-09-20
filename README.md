@@ -14,7 +14,8 @@ The backend currently provides:
 - explicit capability state for required and optional feature groups
 - automatic refresh of semantic mappings when Home Assistant entity-registry entries change
 - diagnostic output for resolved roles, capabilities and the complete Charger Controller registry inventory
-- a stable read-only runtime and WebSocket API for the future dashboard frontend
+- a stable runtime and WebSocket API for the future dashboard frontend
+- an allow-listed semantic control path that dispatches standard Home Assistant services
 
 It intentionally does not create duplicate charger entities, proxy services or dashboard cards.
 
@@ -51,12 +52,19 @@ The instance status is one of:
 
 A completely absent optional capability does not degrade the Charger Instance.
 
-The backend exposes two read-only WebSocket commands for the future frontend:
+The backend exposes three WebSocket commands for the future frontend:
 
 - `r4875g1_charger/instances` lists loaded Charger Instances and their capability summaries
 - `r4875g1_charger/instance` returns the semantic role map and current state snapshot for one config entry
+- `r4875g1_charger/control` dispatches one explicitly allow-listed semantic control through the resolved Home Assistant entity
 
-The WebSocket API never exposes ESPHome unique IDs and does not provide control commands.
+Writable role snapshots expose their control action and current Home Assistant Number metadata (`min`, `max`, `step`, `unit`) where applicable. The frontend therefore does not need to know the underlying entity domain or service name.
+
+The initial writable role set is intentionally limited to Charger and per-rectifier START/STOP plus AC current limit, DC voltage limit, DC sum power and fallback voltage/current setpoints.
+
+The control API checks the Charger Instance state, resolved role, current entity availability, Home Assistant user permissions and Number limits before dispatching the standard `button.press` or `number.set_value` service. It contains no charger safety logic and never reports a service call as proof of a Controller state transition; the frontend must observe semantic state roles for the resulting state.
+
+The WebSocket API never exposes ESPHome unique IDs.
 
 ## Language policy
 

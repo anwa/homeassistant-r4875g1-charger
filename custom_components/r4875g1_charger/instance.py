@@ -2,14 +2,34 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import StrEnum
+from math import isfinite
 from typing import Any
 
-from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
-from homeassistant.core import HomeAssistant, State
+from homeassistant.components.button.const import (
+    DOMAIN as BUTTON_DOMAIN,
+    SERVICE_PRESS,
+)
+from homeassistant.components.number.const import (
+    ATTR_MAX,
+    ATTR_MIN,
+    ATTR_STEP,
+    ATTR_VALUE,
+    DOMAIN as NUMBER_DOMAIN,
+    SERVICE_SET_VALUE,
+)
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    ATTR_UNIT_OF_MEASUREMENT,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+)
+from homeassistant.core import Context, HomeAssistant, State
 from homeassistant.helpers import entity_registry as er
 
 from .const import CONTRACT_ROLE, SUPPORTED_CONTRACT_VERSIONS
+from .control import CONTROL_SPECS, ControlAction, ControlSpec
 from .models import CapabilityResolution, ChargerResolution, ResolvedRole
 from .resolver import resolve_charger
 
@@ -21,6 +41,18 @@ class ChargerInstanceStatus(StrEnum):
     DEGRADED = "degraded"
     OFFLINE = "offline"
     INCOMPATIBLE = "incompatible"
+
+
+@dataclass(frozen=True, slots=True)
+class ChargerControlError(Exception):
+    """Describe a rejected semantic control request."""
+
+    code: str
+    message: str
+
+    def __str__(self) -> str:
+        """Return the human-readable control error."""
+        return self.message
 
 
 class ChargerInstance:
@@ -175,8 +207,118 @@ class ChargerInstance:
             and registry_entry.device_id == self._device_id
         )
 
+    def control_spec(self, role: str) -> ControlSpec | None:
+        """Return the explicit semantic control specification for one role."""
+        return CONTROL_SPECS.get(role)
+
+    def control_available(self, role: str) -> bool:
+        """Return whether one semantic control can currently be dispatched."""
+        if self.status not in (
+            ChargerInstanceStatus.OK,
+            ChargerInstanceStatus.DEGRADED,
+        ):
+            return False
+
+        spec = self.control_spec(role)
+        resolved = self.role(role)
+        state = self.state(role)
+
+        return (
+            spec is not None
+            and resolved is not None
+            and resolved.domain == spec.domain
+            and state is not None
+            and state.state != STATE_UNAVAILABLE
+        )
+
+    async def async_control(
+        self,
+        role: str,
+        *,
+        value: float | None = None,
+        context: Context | None = None,
+    ) -> dict[str, object]:
+        """Dispatch one allow-listed semantic control through a standard HA service."""
+        if self.status not in (
+            ChargerInstanceStatus.OK,
+            ChargerInstanceStatus.DEGRADED,
+        ):
+            raise ChargerControlError(
+                "instance_unavailable",
+                f"Charger Instance is {self.status.value}",
+            )
+
+        spec = self.control_spec(role)
+        if spec is None:
+            raise ChargerControlError(
+                "role_not_writable",
+                f"Semantic role {role} is not writable",
+            )
+
+        resolved = self.role(role)
+        if resolved is None:
+            raise ChargerControlError(
+                "role_unresolved",
+                f"Semantic role {role} is not currently resolved",
+            )
+
+        if resolved.domain != spec.domain:
+            raise ChargerControlError(
+                "role_domain_mismatch",
+                f"Semantic role {role} resolved to unexpected domain "
+                f"{resolved.domain}",
+            )
+
+        state = self._hass.states.get(resolved.entity_id)
+        if state is None or state.state == STATE_UNAVAILABLE:
+            raise ChargerControlError(
+                "entity_unavailable",
+                f"Entity for semantic role {role} is unavailable",
+            )
+
+        if spec.action is ControlAction.PRESS:
+            if value is not None:
+                raise ChargerControlError(
+                    "unexpected_value",
+                    f"Semantic role {role} does not accept a value",
+                )
+
+            await self._hass.services.async_call(
+                BUTTON_DOMAIN,
+                SERVICE_PRESS,
+                {ATTR_ENTITY_ID: resolved.entity_id},
+                context=context,
+                blocking=True,
+            )
+        else:
+            if value is None:
+                raise ChargerControlError(
+                    "value_required",
+                    f"Semantic role {role} requires a numeric value",
+                )
+
+            self._validate_number_value(role, state, value)
+
+            await self._hass.services.async_call(
+                NUMBER_DOMAIN,
+                SERVICE_SET_VALUE,
+                {
+                    ATTR_ENTITY_ID: resolved.entity_id,
+                    ATTR_VALUE: value,
+                },
+                context=context,
+                blocking=True,
+            )
+
+        return {
+            "role": role,
+            "entity_id": resolved.entity_id,
+            "action": spec.action.value,
+            "service_call_completed": True,
+        }
+
     def summary(self, config_entry_id: str) -> dict[str, Any]:
-        """Return the stable read-only API summary for this instance."""
+        """Return the stable API summary for this instance."""
         return {
             "config_entry_id": config_entry_id,
             "name": self.name,
@@ -198,10 +340,10 @@ class ChargerInstance:
         }
 
     def snapshot(self, config_entry_id: str) -> dict[str, Any]:
-        """Return the semantic read-only API snapshot for this instance."""
+        """Return the semantic API snapshot for this instance."""
         data = self.summary(config_entry_id)
         data["roles"] = {
-            role: self._role_snapshot(resolved)
+            role: self._role_snapshot(role, resolved)
             for role, resolved in sorted(self._resolution.roles.items())
         }
         return data
@@ -218,6 +360,7 @@ class ChargerInstance:
 
     def _role_snapshot(
         self,
+        role: str,
         resolved: ResolvedRole,
     ) -> dict[str, object]:
         """Return one frontend-safe semantic role snapshot."""
@@ -227,9 +370,61 @@ class ChargerInstance:
             and state.state not in (STATE_UNKNOWN, STATE_UNAVAILABLE)
         )
 
-        return {
+        data: dict[str, object] = {
             "entity_id": resolved.entity_id,
             "domain": resolved.domain,
             "available": state_available,
             "state": state.state if state is not None else None,
         }
+
+        if (spec := self.control_spec(role)) is not None:
+            control: dict[str, object] = {
+                "action": spec.action.value,
+                "available": self.control_available(role),
+            }
+
+            if spec.action is ControlAction.SET_VALUE:
+                control.update(self._number_metadata(state))
+
+            data["control"] = control
+
+        return data
+
+    @staticmethod
+    def _number_metadata(state: State | None) -> dict[str, object]:
+        """Return frontend metadata for one Home Assistant Number entity."""
+        attributes = state.attributes if state is not None else {}
+        return {
+            "min": attributes.get(ATTR_MIN),
+            "max": attributes.get(ATTR_MAX),
+            "step": attributes.get(ATTR_STEP),
+            "unit": attributes.get(ATTR_UNIT_OF_MEASUREMENT),
+        }
+
+    @staticmethod
+    def _validate_number_value(
+        role: str,
+        state: State,
+        value: float,
+    ) -> None:
+        """Validate a numeric control value against current HA metadata."""
+        if not isfinite(value):
+            raise ChargerControlError(
+                "invalid_value",
+                f"Semantic role {role} requires a finite numeric value",
+            )
+
+        minimum = state.attributes.get(ATTR_MIN)
+        maximum = state.attributes.get(ATTR_MAX)
+
+        if isinstance(minimum, int | float) and value < minimum:
+            raise ChargerControlError(
+                "value_out_of_range",
+                f"Value {value} is below minimum {minimum} for {role}",
+            )
+
+        if isinstance(maximum, int | float) and value > maximum:
+            raise ChargerControlError(
+                "value_out_of_range",
+                f"Value {value} is above maximum {maximum} for {role}",
+            )
