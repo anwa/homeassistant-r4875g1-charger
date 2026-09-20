@@ -11,5 +11,5 @@
   "integration_type": "device",
   "issue_tracker": "https://github.com/anwa/homeassistant-r4875g1-charger/issues",
   "name": "R4875G1 Charger",
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.1
+
+Documentation and branding release.
+
+- add local Home Assistant integration icon and logo assets
+- add complete HACS custom-repository installation instructions
+- document first-time Charger Controller configuration
+- document HACS update discovery and restart behavior
+- add manual installation and removal instructions
+- document diagnostics and common troubleshooting cases
+- clarify integration, firmware and Home Assistant Contract versioning
+- document the stable release workflow and Backend API v1 compatibility rules
+
+No backend API, semantic role or control behavior changed in this release.
+
 ## 1.0.0
 
 First stable backend release.
