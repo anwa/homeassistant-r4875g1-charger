@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 from math import isfinite
+from collections.abc import Callable
 from typing import Any
 
 from homeassistant.components.button.const import (
@@ -339,14 +340,37 @@ class ChargerInstance:
             },
         }
 
-    def snapshot(self, config_entry_id: str) -> dict[str, Any]:
+    def snapshot(
+        self,
+        config_entry_id: str,
+        *,
+        can_read: Callable[[str], bool] | None = None,
+    ) -> dict[str, Any]:
         """Return the semantic API snapshot for this instance."""
         data = self.summary(config_entry_id)
         data["roles"] = {
-            role: self._role_snapshot(role, resolved)
+            role: self.role_snapshot(role)
             for role, resolved in sorted(self._resolution.roles.items())
+            if can_read is None or can_read(resolved.entity_id)
         }
         return data
+
+    def role_snapshot(
+        self,
+        role: str,
+        *,
+        include_mapping: bool = True,
+    ) -> dict[str, object] | None:
+        """Return the current frontend-safe snapshot for one semantic role."""
+        resolved = self.role(role)
+        if resolved is None:
+            return None
+
+        return self._role_snapshot(
+            role,
+            resolved,
+            include_mapping=include_mapping,
+        )
 
     def as_diagnostics(self) -> dict[str, object]:
         """Return diagnostics for the active runtime instance."""
@@ -362,6 +386,8 @@ class ChargerInstance:
         self,
         role: str,
         resolved: ResolvedRole,
+        *,
+        include_mapping: bool = True,
     ) -> dict[str, object]:
         """Return one frontend-safe semantic role snapshot."""
         state = self._hass.states.get(resolved.entity_id)
@@ -371,11 +397,13 @@ class ChargerInstance:
         )
 
         data: dict[str, object] = {
-            "entity_id": resolved.entity_id,
-            "domain": resolved.domain,
             "available": state_available,
             "state": state.state if state is not None else None,
         }
+
+        if include_mapping:
+            data["entity_id"] = resolved.entity_id
+            data["domain"] = resolved.domain
 
         if (spec := self.control_spec(role)) is not None:
             control: dict[str, object] = {

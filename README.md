@@ -16,6 +16,7 @@ The backend currently provides:
 - diagnostic output for resolved roles, capabilities and the complete Charger Controller registry inventory
 - a stable runtime and WebSocket API for the future dashboard frontend
 - an allow-listed semantic control path that dispatches standard Home Assistant services
+- a semantic live subscription that keeps frontend state independent of concrete entity IDs
 
 It intentionally does not create duplicate charger entities, proxy services or dashboard cards.
 
@@ -52,17 +53,22 @@ The instance status is one of:
 
 A completely absent optional capability does not degrade the Charger Instance.
 
-The backend exposes three WebSocket commands for the future frontend:
+The backend exposes four WebSocket commands for the future frontend:
 
 - `r4875g1_charger/instances` lists loaded Charger Instances and their capability summaries
 - `r4875g1_charger/instance` returns the semantic role map and current state snapshot for one config entry
 - `r4875g1_charger/control` dispatches one explicitly allow-listed semantic control through the resolved Home Assistant entity
+- `r4875g1_charger/subscribe` streams semantic state and mapping updates for one config entry
 
 Writable role snapshots expose their control action and current Home Assistant Number metadata (`min`, `max`, `step`, `unit`) where applicable. The frontend therefore does not need to know the underlying entity domain or service name.
 
 The initial writable role set is intentionally limited to Charger and per-rectifier START/STOP plus AC current limit, DC voltage limit, DC sum power and fallback voltage/current setpoints.
 
 The control API checks the Charger Instance state, resolved role, current entity availability, Home Assistant user permissions and Number limits before dispatching the standard `button.press` or `number.set_value` service. It contains no charger safety logic and never reports a service call as proof of a Controller state transition; the frontend must observe semantic state roles for the resulting state.
+
+The semantic subscription sends an initial `snapshot` event and then `role_state` events keyed by semantic role. State events intentionally omit the concrete Home Assistant entity ID and domain. Registry changes rebind the internal state listener automatically and emit a `mapping_changed` snapshot, so entity renames do not require frontend resubscription.
+
+The instance list, snapshot and subscription APIs honor Home Assistant entity read permissions. A user must be able to read the Contract marker to access a Charger Instance, and individual snapshot/subscription roles are filtered through `POLICY_READ`.
 
 The WebSocket API never exposes ESPHome unique IDs.
 
