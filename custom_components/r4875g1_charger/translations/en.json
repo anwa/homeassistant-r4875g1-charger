@@ -1,0 +1,31 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "This Charger Controller is already configured."
+    },
+    "error": {
+      "ambiguous_required_roles": "More than one ESPHome entity matches a required charger role.",
+      "contract_unavailable": "The Charger Controller contract marker is unavailable. Make sure the controller is online and try again.",
+      "device_not_found": "The selected Home Assistant device no longer exists.",
+      "disabled_required_roles": "One or more required Charger Controller entities are disabled in Home Assistant.",
+      "missing_required_roles": "The selected ESPHome device does not expose all required bootstrap charger entities.",
+      "missing_source_config_entry": "The selected device is not attached to a Home Assistant config entry.",
+      "missing_stable_identifier": "The selected ESPHome device does not expose the stable MAC identifier required by this integration.",
+      "not_esphome_device": "The selected device is not owned by the ESPHome integration.",
+      "unsupported_contract": "The selected Charger Controller exposes an unsupported Home Assistant contract version."
+    },
+    "step": {
+      "user": {
+        "data": {
+          "charger_device_id": "Charger Controller"
+        },
+        "data_description": {
+          "charger_device_id": "Select the ESPHome R4875G1 Charger Controller. The Remote HMI is not a valid Charger Controller source."
+        },
+        "description": "Select the existing ESPHome Charger Controller. The integration will validate Home Assistant Contract 1 and discover its charger entities automatically.",
+        "title": "Select Charger Controller"
+      }
+    }
+  },
+  "title": "R4875G1 Charger"
+}

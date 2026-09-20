@@ -1,0 +1,15 @@
+{
+  "after_dependencies": [
+    "esphome"
+  ],
+  "codeowners": [
+    "@anwa"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/anwa/homeassistant-r4875g1-charger",
+  "domain": "r4875g1_charger",
+  "integration_type": "device",
+  "issue_tracker": "https://github.com/anwa/homeassistant-r4875g1-charger/issues",
+  "name": "R4875G1 Charger",
+  "version": "0.1.1"
+}
