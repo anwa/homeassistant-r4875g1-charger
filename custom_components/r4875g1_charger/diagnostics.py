@@ -13,5 +13,5 @@ async def async_get_config_entry_diagnostics(
     hass: HomeAssistant,
     entry: R4875G1ChargerConfigEntry,
 ) -> dict[str, Any]:
-    """Return the active runtime resolution for one Charger Instance."""
+    """Return diagnostics for the active Charger Instance runtime."""
     return entry.runtime_data.as_diagnostics()

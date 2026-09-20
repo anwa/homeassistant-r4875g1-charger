@@ -14,6 +14,7 @@ The backend currently provides:
 - explicit capability state for required and optional feature groups
 - automatic refresh of semantic mappings when Home Assistant entity-registry entries change
 - diagnostic output for resolved roles, capabilities and the complete Charger Controller registry inventory
+- a stable read-only runtime and WebSocket API for the future dashboard frontend
 
 It intentionally does not create duplicate charger entities, proxy services or dashboard cards.
 
@@ -36,6 +37,26 @@ Contract 1 currently defines 84 required Controller-side roles and 38 optional r
 The backend refreshes the active runtime mapping after Home Assistant entity-registry changes. Diagnostics expose that active runtime mapping and hash entity unique IDs before including them in diagnostic output.
 
 No charger safety or control logic is implemented here.
+
+## Runtime API
+
+Each loaded config entry owns a `ChargerInstance` runtime object. It is the single backend access layer for semantic roles, current Home Assistant states, capability availability and high-level instance status.
+
+The instance status is one of:
+
+- `ok` when the required contract is compatible, the Controller is online and no optional capability is partially mapped
+- `degraded` when the required contract is usable but an optional capability is only partially mapped
+- `offline` when the Contract marker has no usable Home Assistant state
+- `incompatible` when the live contract version is unsupported or required semantic roles are structurally unusable
+
+A completely absent optional capability does not degrade the Charger Instance.
+
+The backend exposes two read-only WebSocket commands for the future frontend:
+
+- `r4875g1_charger/instances` lists loaded Charger Instances and their capability summaries
+- `r4875g1_charger/instance` returns the semantic role map and current state snapshot for one config entry
+
+The WebSocket API never exposes ESPHome unique IDs and does not provide control commands.
 
 ## Language policy
 
