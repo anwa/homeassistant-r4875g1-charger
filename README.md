@@ -1,33 +1,33 @@
 <p align="center">
-  <img src="custom_components/r4875g1_charger/brand/logo.png" alt="R4875G1 Charger" width="420">
+  <img
+    src="https://raw.githubusercontent.com/anwa/homeassistant-r4875g1-charger/main/custom_components/r4875g1_charger/brand/logo.png"
+    alt="R4875G1 Charger"
+    width="420">
 </p>
 
 # R4875G1 Charger for Home Assistant
 
-Home Assistant backend integration for the R4875G1 three-phase charger project.
+Home Assistant integration for the R4875G1 three-phase charger project.
 
-## Release status
+It connects an existing ESPHome R4875G1 Charger Controller to Home Assistant through a stable semantic interface without duplicating ESPHome entities or moving charger safety logic away from the Controller.
 
-Version 1.0.0 is the first stable backend release. It freezes Backend API v1 for the planned R4875G1 Home Assistant dashboard while keeping Charger Controller firmware and Home Assistant Contract versioning independent.
+<p align="center">
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=anwa&repository=homeassistant-r4875g1-charger&category=integration">
+    <img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open R4875G1 Charger in HACS">
+  </a>
+</p>
 
-The backend is considered stable for the documented Contract-1 discovery, runtime, control and live-subscription interfaces. The dashboard frontend, external battery-bank discovery and history/trend presentation are separate project milestones and are not part of this backend release.
+## Contents
 
-The backend currently provides:
-
-- UI-based selection of an existing ESPHome Charger Controller device
-- validation of the explicit R4875G1 Home Assistant Contract marker
-- semantic resolution of the complete Controller-side Contract-1 role set
-- explicit capability state for required and optional feature groups
-- automatic refresh of semantic mappings when Home Assistant entity-registry entries change
-- diagnostic output for resolved roles, capabilities and the complete Charger Controller registry inventory
-- a stable runtime and WebSocket API for the future dashboard frontend
-- an allow-listed semantic control path that dispatches standard Home Assistant services
-- a semantic live subscription that keeps frontend state independent of concrete entity IDs
-- local Home Assistant branding through the integration `brand/` directory
-
-It intentionally does not create duplicate charger entities, proxy services or dashboard cards.
-
-The Charger Controller remains authoritative for charger control, CAN communication, lifecycle decisions, thermal protection, START eligibility and blackstart operation.
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Updating](#updating)
+- [Diagnostics](#diagnostics)
+- [Troubleshooting](#troubleshooting)
+- [Architecture](#architecture)
+- [Runtime API](#runtime-api)
+- [Release status and compatibility](#release-status-and-compatibility)
 
 ## Requirements
 
@@ -38,9 +38,10 @@ The Charger Controller remains authoritative for charger control, CAN communicat
 
 ## Installation
 
-### Install with HACS
+<details open>
+<summary><b>Install with HACS (recommended)</b></summary>
 
-HACS is the recommended installation method. The repository can be added as a custom integration repository.
+HACS is the recommended installation method. Use the button above or add this repository manually as a custom integration repository.
 
 1. Open **HACS** in Home Assistant.
 2. Open the three-dot menu in the upper-right corner.
@@ -54,7 +55,23 @@ HACS is the recommended installation method. The repository can be added as a cu
 
 After the restart, the integration is available under **Settings -> Devices & services -> Add integration**.
 
-### Configure the integration
+</details>
+
+<details>
+<summary><b>Manual installation</b></summary>
+
+Manual installation is supported as a fallback when HACS is not used.
+
+1. Download or clone the desired release.
+2. Copy `custom_components/r4875g1_charger` into the Home Assistant configuration directory so that the final path is `/config/custom_components/r4875g1_charger`.
+3. Restart Home Assistant.
+4. Configure the integration from **Settings -> Devices & services -> Add integration**.
+
+Manual installations are not managed by HACS and therefore do not receive HACS update notifications.
+
+</details>
+
+## Configuration
 
 The Charger Controller must already exist in Home Assistant through the ESPHome integration before this integration is configured.
 
@@ -70,22 +87,9 @@ During setup, the integration validates the Home Assistant Contract marker and t
 
 Multiple Charger Controllers are supported by adding the integration once for each Controller device.
 
-### Manual installation
-
-Manual installation is supported as a fallback when HACS is not used.
-
-1. Download or clone the desired release.
-2. Copy `custom_components/r4875g1_charger` into the Home Assistant configuration directory so that the final path is `/config/custom_components/r4875g1_charger`.
-3. Restart Home Assistant.
-4. Configure the integration from **Settings -> Devices & services -> Add integration**.
-
-Manual installations are not managed by HACS and therefore do not receive HACS update notifications.
-
 ## Updating
 
 HACS tracks the repository after installation and provides an update path when a newer stable GitHub Release is available.
-
-For example, after installing `v1.0.0`, a future published `v1.1.0` release can be offered by HACS as an update.
 
 To install an update:
 
@@ -97,95 +101,6 @@ To install an update:
 HACS normally refreshes repository metadata automatically. To request an immediate metadata refresh after a new release has been published, open the repository in HACS, open its three-dot menu and select **Update information**.
 
 Refreshing repository information does not install the new version by itself.
-
-### Version compatibility
-
-The integration version, Controller firmware version and Home Assistant Contract version are intentionally independent.
-
-- `v1.x` integration releases follow Backend API v1 compatibility rules.
-- Home Assistant Contract 1 defines the semantic interface between the Charger Controller firmware and this integration.
-- A newer integration release does not automatically require newer Controller firmware unless the release notes explicitly state a changed requirement.
-- A firmware release may remain compatible with the same Home Assistant Contract version.
-
-Review the release notes before installing a future major integration release.
-
-## Branding
-
-The integration ships local Home Assistant brand assets in:
-
-```text
-custom_components/
-└── r4875g1_charger/
-    └── brand/
-        ├── icon.png
-        └── logo.png
-```
-
-`icon.png` is the square integration icon used where Home Assistant has limited display space. `logo.png` is the wider integration logo used where more space is available.
-
-No manifest entry is required for these local brand assets.
-
-## Architecture
-
-The integration binds one Home Assistant config entry to one existing ESPHome Charger Controller.
-
-The user selects the Charger Controller device once. The integration resolves Home Assistant registry entries to stable semantic roles using the ESPHome platform, entity domain and original entity name. User-renamed Home Assistant entity IDs therefore do not form part of the semantic contract.
-
-Contract 1 currently defines 84 required Controller-side roles and 38 optional roles. Optional roles are grouped into explicit capabilities and do not invalidate the Charger Instance when absent.
-
-The backend refreshes the active runtime mapping after Home Assistant entity-registry changes. Diagnostics expose that active runtime mapping and hash entity unique IDs before including them in diagnostic output.
-
-No charger safety or control logic is implemented here.
-
-## Runtime API
-
-Each loaded config entry owns a `ChargerInstance` runtime object. It is the single backend access layer for semantic roles, current Home Assistant states, capability availability and high-level instance status.
-
-The instance status is one of:
-
-- `ok` when the required contract is compatible, the Controller is online and no optional capability is partially mapped
-- `degraded` when the required contract is usable but an optional capability is only partially mapped
-- `offline` when the Contract marker has no usable Home Assistant state
-- `incompatible` when the live contract version is unsupported or required semantic roles are structurally unusable
-
-A completely absent optional capability does not degrade the Charger Instance.
-
-The backend exposes four WebSocket commands for frontend consumers:
-
-- `r4875g1_charger/instances` lists loaded Charger Instances and their capability summaries
-- `r4875g1_charger/instance` returns the semantic role map and current state snapshot for one config entry
-- `r4875g1_charger/control` dispatches one explicitly allow-listed semantic control through the resolved Home Assistant entity
-- `r4875g1_charger/subscribe` streams semantic state and mapping updates for one config entry
-
-Writable role snapshots expose their control action and current Home Assistant Number metadata (`min`, `max`, `step`, `unit`) where applicable. Frontend consumers therefore do not need to know the underlying entity domain or service name.
-
-The initial writable role set is intentionally limited to Charger and per-rectifier START/STOP plus AC current limit, DC voltage limit, DC sum power and fallback voltage/current setpoints.
-
-The control API checks the Charger Instance state, resolved role, current entity availability, Home Assistant user permissions and Number limits before dispatching the standard `button.press` or `number.set_value` service. It contains no charger safety logic and never reports a service call as proof of a Controller state transition; frontend consumers must observe semantic state roles for the resulting state.
-
-The semantic subscription sends an initial `snapshot` event and then `role_state` events keyed by semantic role. State events intentionally omit the concrete Home Assistant entity ID and domain. Registry changes rebind the internal state listener automatically and emit a `mapping_changed` snapshot, so entity renames do not require frontend resubscription.
-
-The instance list, snapshot and subscription APIs honor Home Assistant entity read permissions. A user must be able to read the Contract marker to access a Charger Instance, and individual snapshot/subscription roles are filtered through `POLICY_READ`.
-
-The WebSocket API never exposes ESPHome unique IDs.
-
-## Capability groups
-
-Required capabilities:
-
-- contract identity
-- core charger
-- rectifier detail
-- cooling environment
-
-Optional capabilities:
-
-- advanced charger telemetry and controls
-- per-rectifier fan control
-- external chassis cooling
-- Controller diagnostics
-
-External battery-bank discovery remains a later milestone because those entities are owned by other Home Assistant integrations rather than the Charger Controller.
 
 ## Diagnostics
 
@@ -252,15 +167,85 @@ If HACS still does not offer the new version, verify that the version was publis
 
 Restart Home Assistant to activate the newly downloaded integration version.
 
-## Removal
+## Architecture
 
-To remove the integration completely:
+The integration binds one Home Assistant config entry to one existing ESPHome Charger Controller.
 
-1. Remove the R4875G1 Charger config entry from **Settings -> Devices & services**.
-2. Remove **R4875G1 Charger** from HACS if it was installed through HACS.
-3. Restart Home Assistant if requested.
+The user selects the Charger Controller device once. The integration resolves Home Assistant registry entries to stable semantic roles using the ESPHome platform, entity domain and original entity name. User-renamed Home Assistant entity IDs therefore do not form part of the semantic contract.
 
-Removing this integration does not remove the ESPHome Charger Controller device and does not change Controller firmware behavior.
+Contract 1 currently defines 84 required Controller-side roles and 38 optional roles. Optional roles are grouped into explicit capabilities and do not invalidate the Charger Instance when absent.
+
+The backend refreshes the active runtime mapping after Home Assistant entity-registry changes. Diagnostics expose that active runtime mapping and hash entity unique IDs before including them in diagnostic output.
+
+No charger safety or control logic is implemented here. The Charger Controller remains authoritative for charger control, CAN communication, lifecycle decisions, thermal protection, START eligibility and blackstart operation.
+
+## Runtime API
+
+Each loaded config entry owns a `ChargerInstance` runtime object. It is the single backend access layer for semantic roles, current Home Assistant states, capability availability and high-level instance status.
+
+The instance status is one of:
+
+- `ok` when the required contract is compatible, the Controller is online and no optional capability is partially mapped
+- `degraded` when the required contract is usable but an optional capability is only partially mapped
+- `offline` when the Contract marker has no usable Home Assistant state
+- `incompatible` when the live contract version is unsupported or required semantic roles are structurally unusable
+
+A completely absent optional capability does not degrade the Charger Instance.
+
+The backend exposes four WebSocket commands for frontend consumers:
+
+- `r4875g1_charger/instances` lists loaded Charger Instances and their capability summaries
+- `r4875g1_charger/instance` returns the semantic role map and current state snapshot for one config entry
+- `r4875g1_charger/control` dispatches one explicitly allow-listed semantic control through the resolved Home Assistant entity
+- `r4875g1_charger/subscribe` streams semantic state and mapping updates for one config entry
+
+Writable role snapshots expose their control action and current Home Assistant Number metadata (`min`, `max`, `step`, `unit`) where applicable. Frontend consumers therefore do not need to know the underlying entity domain or service name.
+
+The initial writable role set is intentionally limited to Charger and per-rectifier START/STOP plus AC current limit, DC voltage limit, DC sum power and fallback voltage/current setpoints.
+
+The control API checks the Charger Instance state, resolved role, current entity availability, Home Assistant user permissions and Number limits before dispatching the standard `button.press` or `number.set_value` service. It contains no charger safety logic and never reports a service call as proof of a Controller state transition; frontend consumers must observe semantic state roles for the resulting state.
+
+The semantic subscription sends an initial `snapshot` event and then `role_state` events keyed by semantic role. State events intentionally omit the concrete Home Assistant entity ID and domain. Registry changes rebind the internal state listener automatically and emit a `mapping_changed` snapshot, so entity renames do not require frontend resubscription.
+
+The instance list, snapshot and subscription APIs honor Home Assistant entity read permissions. A user must be able to read the Contract marker to access a Charger Instance, and individual snapshot/subscription roles are filtered through `POLICY_READ`.
+
+The WebSocket API never exposes ESPHome unique IDs.
+
+## Capability groups
+
+Required capabilities:
+
+- contract identity
+- core charger
+- rectifier detail
+- cooling environment
+
+Optional capabilities:
+
+- advanced charger telemetry and controls
+- per-rectifier fan control
+- external chassis cooling
+- Controller diagnostics
+
+External battery-bank discovery remains a later milestone because those entities are owned by other Home Assistant integrations rather than the Charger Controller.
+
+## Branding
+
+The integration ships local Home Assistant brand assets in:
+
+```text
+custom_components/
+└── r4875g1_charger/
+    └── brand/
+        ├── icon.png
+        └── logo.png
+```
+
+`icon.png` is the square integration icon used where Home Assistant has limited display space. `logo.png` is the integration logo used where more space is available.
+
+The README uses an absolute raw GitHub URL for the logo so that renderers outside the GitHub repository context, including HACS, can resolve the image.
+
+No manifest entry is required for these local brand assets.
 
 ## Repository relationship
 
@@ -270,7 +255,11 @@ Firmware and the authoritative semantic contract are maintained in:
 
 The planned dashboard frontend will be maintained separately from this backend integration.
 
-## Backend API compatibility
+## Release status and compatibility
+
+The 1.x release series is the stable Backend API v1 line. Backend API v1 was established with version 1.0.0 and remains compatible throughout the 1.x release series.
+
+The backend is considered stable for the documented Contract-1 discovery, runtime, control and live-subscription interfaces. The dashboard frontend, external battery-bank discovery and history/trend presentation are separate project milestones and are not part of this backend release line.
 
 The documented WebSocket commands, semantic role identifiers and subscription event structures form Backend API v1.
 
@@ -280,7 +269,13 @@ For releases in the 1.x series:
 - additive fields, roles and endpoints may be introduced without breaking existing v1 consumers
 - a breaking change to the documented backend API requires a new major integration version
 
-Home Assistant Contract 1 is a separate compatibility boundary between the firmware and this integration. The integration package version does not replace the firmware contract version.
+The integration version, Controller firmware version and Home Assistant Contract version are intentionally independent:
+
+- Home Assistant Contract 1 defines the semantic interface between the Charger Controller firmware and this integration.
+- A newer integration release does not automatically require newer Controller firmware unless the release notes explicitly state a changed requirement.
+- A firmware release may remain compatible with the same Home Assistant Contract version.
+
+Review the release notes before installing a future major integration release.
 
 ## Releases
 
@@ -291,6 +286,16 @@ For each release, the integration version in `manifest.json`, the Git tag and th
 `1.1.0` -> `v1.1.0`
 
 Release notes are maintained in `CHANGELOG.md` and in the corresponding GitHub Release.
+
+## Removal
+
+To remove the integration completely:
+
+1. Remove the R4875G1 Charger config entry from **Settings -> Devices & services**.
+2. Remove **R4875G1 Charger** from HACS if it was installed through HACS.
+3. Restart Home Assistant if requested.
+
+Removing this integration does not remove the ESPHome Charger Controller device and does not change Controller firmware behavior.
 
 ## Language policy
 

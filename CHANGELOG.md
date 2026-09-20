@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.2
+
+HACS documentation rendering and usability release.
+
+- use an absolute raw GitHub URL for the README logo so HACS can resolve it
+- add a direct Open in HACS button
+- reorganize the README around installation, configuration and updates
+- add a compact contents section for faster navigation
+- make HACS and manual installation sections easier to scan
+- make the stable 1.x release status version-independent
+- clarify the relationship between integration, firmware and Contract versions
+
+No backend API, semantic role or control behavior changed in this release.
+
 ## 1.0.1
 
 Documentation and branding release.
