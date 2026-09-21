@@ -399,6 +399,11 @@ class ChargerInstance:
         data: dict[str, object] = {
             "available": state_available,
             "state": state.state if state is not None else None,
+            "unit": (
+                state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+                if state is not None
+                else None
+            ),
         }
 
         if include_mapping:

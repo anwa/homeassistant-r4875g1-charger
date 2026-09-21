@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0
+
+Additive Backend API v1 metadata release.
+
+- expose Home Assistant units on every semantic role snapshot when available
+- include the same unit metadata in live `role_state` subscription events
+- preserve existing writable Number control metadata for compatibility
+- keep semantic role identifiers and control behavior unchanged
+
+This release is backward-compatible with Backend API v1 consumers.
+
 ## 1.0.2
 
 HACS documentation rendering and usability release.

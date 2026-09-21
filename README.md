@@ -199,7 +199,7 @@ The backend exposes four WebSocket commands for frontend consumers:
 - `r4875g1_charger/control` dispatches one explicitly allow-listed semantic control through the resolved Home Assistant entity
 - `r4875g1_charger/subscribe` streams semantic state and mapping updates for one config entry
 
-Writable role snapshots expose their control action and current Home Assistant Number metadata (`min`, `max`, `step`, `unit`) where applicable. Frontend consumers therefore do not need to know the underlying entity domain or service name.
+Semantic role snapshots expose the current Home Assistant unit of measurement as `unit` when available. Writable Number roles additionally expose their control action and current Number metadata (`min`, `max`, `step`, `unit`). Frontend consumers therefore do not need to know the underlying entity domain or service name.
 
 The initial writable role set is intentionally limited to Charger and per-rectifier START/STOP plus AC current limit, DC voltage limit, DC sum power and fallback voltage/current setpoints.
 
