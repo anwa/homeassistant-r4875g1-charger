@@ -12,6 +12,7 @@ class ControlAction(StrEnum):
 
     PRESS = "press"
     SET_VALUE = "set_value"
+    SET_SWITCH = "set_switch"
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,4 +49,9 @@ CONTROL_SPECS: Final[dict[str, ControlSpec]] = {
         ControlAction.SET_VALUE,
         "number",
     ),
+    "cooling.external.automatic": ControlSpec(
+        ControlAction.SET_SWITCH, "switch"
+    ),
+    "cooling.external.power": ControlSpec(ControlAction.SET_SWITCH, "switch"),
+    "cooling.external.manual_pwm": ControlSpec(ControlAction.SET_VALUE, "number"),
 }

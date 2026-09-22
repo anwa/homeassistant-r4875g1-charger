@@ -20,9 +20,12 @@ from homeassistant.components.number.const import (
     DOMAIN as NUMBER_DOMAIN,
     SERVICE_SET_VALUE,
 )
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_UNIT_OF_MEASUREMENT,
+    SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
 )
@@ -236,7 +239,7 @@ class ChargerInstance:
         self,
         role: str,
         *,
-        value: float | None = None,
+        value: float | bool | None = None,
         context: Context | None = None,
     ) -> dict[str, object]:
         """Dispatch one allow-listed semantic control through a standard HA service."""
@@ -291,8 +294,8 @@ class ChargerInstance:
                 context=context,
                 blocking=True,
             )
-        else:
-            if value is None:
+        elif spec.action is ControlAction.SET_VALUE:
+            if value is None or isinstance(value, bool):
                 raise ChargerControlError(
                     "value_required",
                     f"Semantic role {role} requires a numeric value",
@@ -306,6 +309,22 @@ class ChargerInstance:
                 {
                     ATTR_ENTITY_ID: resolved.entity_id,
                     ATTR_VALUE: value,
+                },
+                context=context,
+                blocking=True,
+            )
+        else:
+            if not isinstance(value, bool):
+                raise ChargerControlError(
+                    "value_required",
+                    f"Semantic role {role} requires a boolean value",
+                )
+
+            await self._hass.services.async_call(
+                SWITCH_DOMAIN,
+                SERVICE_TURN_ON if value else SERVICE_TURN_OFF,
+                {
+                    ATTR_ENTITY_ID: resolved.entity_id,
                 },
                 context=context,
                 blocking=True,

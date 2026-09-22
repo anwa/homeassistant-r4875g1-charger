@@ -1,5 +1,19 @@
 # Changelog
 
++## 1.2.0
+
+Cooling-control Backend API milestone.
+
+- add generic semantic Switch control support through Backend API v1
+- add `set_switch` control metadata with boolean values
+- allow semantic control of external cooling automatic mode
+- allow semantic control of external cooling fan power
+- allow writes to the external cooling manual PWM setpoint
+- dispatch Switch controls through standard Home Assistant `switch.turn_on` and `switch.turn_off` services
+- keep Controller-side cooling behavior and safety authoritative in the Charger Controller
+
+This release is a backward-compatible additive extension of Backend API v1.
+
 ## 1.1.1
 
 Repository validation and branding alignment release.

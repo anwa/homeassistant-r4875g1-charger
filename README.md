@@ -199,11 +199,13 @@ The backend exposes four WebSocket commands for frontend consumers:
 - `r4875g1_charger/control` dispatches one explicitly allow-listed semantic control through the resolved Home Assistant entity
 - `r4875g1_charger/subscribe` streams semantic state and mapping updates for one config entry
 
-Semantic role snapshots expose the current Home Assistant unit of measurement as `unit` when available. Writable Number roles additionally expose their control action and current Number metadata (`min`, `max`, `step`, `unit`). Frontend consumers therefore do not need to know the underlying entity domain or service name.
+Semantic role snapshots expose the current Home Assistant unit of measurement as `unit` when available. Writable Number roles additionally expose their control action and current Number metadata (`min`, `max`, `step`, `unit`). Writable Switch roles expose the additive `set_switch` control action and accept a boolean control value. Frontend consumers therefore do not need to know the underlying entity domain or service name.
 
-The initial writable role set is intentionally limited to Charger and per-rectifier START/STOP plus AC current limit, DC voltage limit, DC sum power and fallback voltage/current setpoints.
+The writable role set includes Charger and per-rectifier START/STOP, AC current limit, DC voltage limit, DC sum power, fallback voltage/current setpoints, external cooling automatic mode, external cooling fan power and the external cooling manual PWM setpoint.
 
-The control API checks the Charger Instance state, resolved role, current entity availability, Home Assistant user permissions and Number limits before dispatching the standard `button.press` or `number.set_value` service. It contains no charger safety logic and never reports a service call as proof of a Controller state transition; frontend consumers must observe semantic state roles for the resulting state.
+The control API checks the Charger Instance state, resolved role, current entity availability, Home Assistant user permissions and Number limits before dispatching standard Home Assistant services. Button controls use `button.press`, Number controls use `number.set_value`, and Switch controls use `switch.turn_on` or `switch.turn_off`. It contains no charger safety logic and never reports a service call as proof of a Controller state transition; frontend consumers must observe semantic state roles for the resulting state.
+
+For `set_switch`, the `r4875g1_charger/control` command uses the existing `value` field with a boolean value. Number controls continue to use a numeric `value`, so existing Backend API v1 consumers remain compatible.
 
 The semantic subscription sends an initial `snapshot` event and then `role_state` events keyed by semantic role. State events intentionally omit the concrete Home Assistant entity ID and domain. Registry changes rebind the internal state listener automatically and emit a `mapping_changed` snapshot, so entity renames do not require frontend resubscription.
 

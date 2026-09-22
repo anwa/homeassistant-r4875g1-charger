@@ -92,7 +92,9 @@ def websocket_get_instance(
         probatio.Required("type"): "r4875g1_charger/control",
         probatio.Required("config_entry_id"): str,
         probatio.Required("role"): str,
-        probatio.Optional("value"): probatio.Coerce(float),
+        probatio.Optional("value"): probatio.Any(
+            bool, probatio.Coerce(float)
+        ),
     }
 )
 @websocket_api.async_response
