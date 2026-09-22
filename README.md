@@ -2,7 +2,7 @@
   <img
     src="https://raw.githubusercontent.com/anwa/homeassistant-r4875g1-charger/main/custom_components/r4875g1_charger/brand/logo.png"
     alt="R4875G1 Charger"
-    width="420">
+    width="620">
 </p>
 
 # R4875G1 Charger for Home Assistant
@@ -241,7 +241,11 @@ custom_components/
         └── logo.png
 ```
 
-`icon.png` is the square integration icon used where Home Assistant has limited display space. `logo.png` is the integration logo used where more space is available.
+`icon.png` is a 256 x 256 square PNG and uses the shared R4875G1 Charger visual identity with a distinct Home Assistant integration symbol.
+
+`logo.png` is a 768 x 256 landscape PNG and follows the same visual language and branding dimensions as the dashboard repository while remaining clearly identifiable as the Home Assistant integration.
+
+The backend and dashboard therefore form one visual product family while remaining distinguishable by their respective integration and dashboard symbols.
 
 The README uses an absolute raw GitHub URL for the logo so that renderers outside the GitHub repository context, including HACS, can resolve the image.
 
@@ -253,7 +257,11 @@ Firmware and the authoritative semantic contract are maintained in:
 
 `anwa/esphome-r4875g1-3phase-charger`
 
-The planned dashboard frontend will be maintained separately from this backend integration.
+Dashboard frontend:
+
+`anwa/r4875g1-charger-dashboard`
+
+The backend integration and dashboard are maintained as separate HACS repositories while sharing the same project branding.
 
 ## Release status and compatibility
 

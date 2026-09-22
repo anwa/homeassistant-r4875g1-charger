@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.1
+
+Repository validation and branding alignment release.
+
+- add the official HACS repository validation workflow for integrations
+- add an OSI-approved MIT license for HACS repository validation
+- align backend icon and logo assets with the dashboard branding
+- standardize the integration icon at 256 x 256 pixels
+- standardize the integration logo at 768 x 256 pixels
+- align README branding presentation with the dashboard repository
+- document the active dashboard repository relationship
+- prepare repository description and topic metadata for HACS validation
+
+No Backend API v1, semantic role or control behavior changed in this release.
+
 ## 1.1.0
 
 Additive Backend API v1 metadata release.
