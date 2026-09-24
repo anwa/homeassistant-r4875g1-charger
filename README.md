@@ -201,7 +201,9 @@ The backend exposes four WebSocket commands for frontend consumers:
 
 Semantic role snapshots expose the current Home Assistant unit of measurement as `unit` when available. Writable Number roles additionally expose their control action and current Number metadata (`min`, `max`, `step`, `unit`). Writable Switch roles expose the additive `set_switch` control action and accept a boolean control value. Frontend consumers therefore do not need to know the underlying entity domain or service name.
 
-The writable role set includes Charger and per-rectifier START/STOP, AC current limit, DC voltage limit, DC sum power, fallback voltage/current setpoints, external cooling automatic mode, external cooling fan power and the external cooling manual PWM setpoint.
+The writable role set includes Charger and per-rectifier START/STOP, AC current limit, DC current setpoint, DC voltage limit, DC sum power, internal rectifier-fan minimum duty, fallback voltage/current setpoints, external cooling automatic mode, external cooling fan power and the external cooling manual PWM setpoint.
+
+Advanced fan Auto/Full commands, per-rectifier fan mode commands and rectifier discovery remain read-only through Backend API v1 for now because Contract 1 does not expose an unambiguous semantic result state that frontend consumers can observe after those button commands.
 
 The control API checks the Charger Instance state, resolved role, current entity availability, Home Assistant user permissions and Number limits before dispatching standard Home Assistant services. Button controls use `button.press`, Number controls use `number.set_value`, and Switch controls use `switch.turn_on` or `switch.turn_off`. It contains no charger safety logic and never reports a service call as proof of a Controller state transition; frontend consumers must observe semantic state roles for the resulting state.
 

@@ -1,6 +1,19 @@
 # Changelog
 
-+## 1.2.0
+## 1.3.0
+
+Advanced Charger control milestone.
+
+- allow writes to the semantic DC current setpoint
+- allow writes to the internal rectifier-fan minimum-duty setpoint
+- reuse the existing Backend API v1 Number control path and metadata
+- keep fan Auto/Full, per-rectifier fan-mode and rectifier-discovery buttons outside the writable allow-list until Contract 1 exposes an unambiguous observable result state
+- keep Charger Controller behavior and safety authoritative
+- correct the 1.2.0 changelog heading formatting
+
+This release is a backward-compatible additive extension of Backend API v1.
+
+## 1.2.0
 
 Cooling-control Backend API milestone.
 

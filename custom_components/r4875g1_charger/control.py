@@ -33,11 +33,19 @@ CONTROL_SPECS: Final[dict[str, ControlSpec]] = {
     "rectifier.3.command.start": ControlSpec(ControlAction.PRESS, "button"),
     "rectifier.3.command.stop": ControlSpec(ControlAction.PRESS, "button"),
     "charger.ac.current_limit": ControlSpec(ControlAction.SET_VALUE, "number"),
+    "charger.dc.current_setpoint": ControlSpec(
+        ControlAction.SET_VALUE,
+        "number",
+    ),
     "charger.dc.voltage_setpoint": ControlSpec(
         ControlAction.SET_VALUE,
         "number",
     ),
     "charger.dc.sum_power_setpoint": ControlSpec(
+        ControlAction.SET_VALUE,
+        "number",
+    ),
+    "charger.internal_fan.minimum_duty_setpoint": ControlSpec(
         ControlAction.SET_VALUE,
         "number",
     ),
