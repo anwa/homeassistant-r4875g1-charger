@@ -9,6 +9,7 @@ from .const import (
     CAPABILITY_COOLING_ENVIRONMENT,
     CAPABILITY_CORE_CHARGER,
     CAPABILITY_EXTERNAL_COOLING,
+    CAPABILITY_RECTIFIER_ALARM_STATUS,
     CAPABILITY_RECTIFIER_DETAIL,
     CAPABILITY_RECTIFIER_FAN_CONTROL,
     CONTRACT_ENTITY_ORIGINAL_NAME,
@@ -23,6 +24,7 @@ CAPABILITY_REQUIREMENTS: dict[str, bool] = {
     CAPABILITY_COOLING_ENVIRONMENT: True,
     CAPABILITY_ADVANCED_CHARGER: False,
     CAPABILITY_RECTIFIER_FAN_CONTROL: False,
+    CAPABILITY_RECTIFIER_ALARM_STATUS: False,
     CAPABILITY_EXTERNAL_COOLING: False,
     CAPABILITY_CONTROLLER_DIAGNOSTICS: False,
 }
@@ -235,6 +237,66 @@ def _rectifier_optional_role_specs(unit: int) -> tuple[RoleSpec, ...]:
     )
 
 
+def _rectifier_alarm_status_role_specs(unit: int) -> tuple[RoleSpec, ...]:
+    """Return optional alarm/status roles for one rectifier."""
+    suffix = f"Unit {unit}"
+    prefix = f"rectifier.{unit}.alarm"
+
+    bit_roles = (
+        ("output_overvoltage_lockout", "Output Overvoltage Lockout"),
+        ("overtemperature_shutdown", "Overtemperature Shutdown"),
+        ("fault_shutdown", "Fault Shutdown"),
+        ("protection_shutdown", "Protection Shutdown"),
+        ("internal_fan_fault", "Internal Fan Fault"),
+        ("eeprom_error", "EEPROM Error"),
+        ("output_overcurrent", "Output Overcurrent"),
+        ("output_undervoltage", "Output Undervoltage"),
+        ("low_temperature_shutdown", "Low Temperature Shutdown"),
+        ("module_power_off", "Module Power Off"),
+        ("fan_full_speed_mode", "Fan Full Speed Mode"),
+        ("reserved_bit_11", "Alarm Status Reserved Bit 11"),
+        ("internal_overtemperature", "Internal Overtemperature"),
+        ("software_address_rearrangement", "Software Address Rearrangement"),
+        ("automatic_output_mode_switching", "Automatic Output Mode Switching"),
+        ("can_communication_quality_poor", "CAN Communication Quality Poor"),
+        ("sequential_startup_enabled", "Sequential Startup Enabled"),
+        ("input_undervoltage", "Input Undervoltage"),
+        ("ac_imbalance_protection", "AC Imbalance Protection"),
+        ("ac_phase_loss", "AC Phase Loss"),
+        ("severe_ac_imbalance", "Severe AC Imbalance"),
+        ("duplicate_serial_shutdown", "Duplicate Serial Shutdown"),
+        ("input_overvoltage", "Input Overvoltage"),
+        ("pfc_fault", "PFC Fault"),
+        ("current_sharing_imbalance", "Current Sharing Imbalance"),
+        ("efficiency_optimization_shutdown", "Efficiency Optimization Shutdown"),
+        ("internal_communication_error", "Internal Communication Error"),
+        ("output_current_limiting", "Output Current Limiting"),
+        ("current_limiting_mode", "Current Limiting Mode"),
+        ("input_power_failure", "Input Power Failure"),
+        ("pfc_bus_imbalance", "PFC Bus Imbalance"),
+        ("pfc_bus_voltage_fault", "PFC Bus Voltage Fault"),
+    )
+
+    return (
+        RoleSpec(
+            f"{prefix}.raw",
+            "sensor",
+            f"Alarm Status Raw {suffix}",
+            CAPABILITY_RECTIFIER_ALARM_STATUS,
+            required=False,
+        ),
+        *(
+            RoleSpec(
+                f"{prefix}.{role_suffix}",
+                "binary_sensor",
+                f"{original_name} {suffix}",
+                CAPABILITY_RECTIFIER_ALARM_STATUS,
+                required=False,
+            )
+            for role_suffix, original_name in bit_roles
+        ),
+    )
+
 _RECTIFIER_REQUIRED_ROLE_SPECS = tuple(
     role
     for unit in range(1, 4)
@@ -245,6 +307,12 @@ _RECTIFIER_OPTIONAL_ROLE_SPECS = tuple(
     role
     for unit in range(1, 4)
     for role in _rectifier_optional_role_specs(unit)
+)
+
+_RECTIFIER_ALARM_STATUS_ROLE_SPECS = tuple(
+    role
+    for unit in range(1, 4)
+    for role in _rectifier_alarm_status_role_specs(unit)
 )
 
 _COOLING_ENVIRONMENT_ROLE_SPECS: tuple[RoleSpec, ...] = (
@@ -391,6 +459,7 @@ CONTRACT_ROLE_SPECS: tuple[RoleSpec, ...] = (
     + _ADVANCED_CHARGER_ROLE_SPECS
     + _RECTIFIER_REQUIRED_ROLE_SPECS
     + _RECTIFIER_OPTIONAL_ROLE_SPECS
+    + _RECTIFIER_ALARM_STATUS_ROLE_SPECS
     + _COOLING_ENVIRONMENT_ROLE_SPECS
     + _EXTERNAL_COOLING_ROLE_SPECS
     + _CONTROLLER_DIAGNOSTIC_ROLE_SPECS

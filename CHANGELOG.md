@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.4.0
+
+Rectifier alarm/status telemetry milestone.
+
+- add the optional `rectifier_alarm_status` capability
+- expose the raw per-rectifier Huawei `0x0183` alarm/status word through semantic Backend API roles
+- expose all 32 documented `0x0183` alarm/status bits for Rectifier Units 1-3
+- keep the alarm/status capability optional so older compatible Charger Controller firmware remains usable
+- keep all alarm/status roles read-only and diagnostic-only
+- preserve the Charger Controller as the authoritative source for charger safety and control behavior
+- retain Backend API v1 compatibility through additive semantic roles and capability metadata
+
+This release is a backward-compatible additive extension of Backend API v1.
+
 ## 1.3.0
 
 Advanced Charger control milestone.

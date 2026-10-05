@@ -173,7 +173,7 @@ The integration binds one Home Assistant config entry to one existing ESPHome Ch
 
 The user selects the Charger Controller device once. The integration resolves Home Assistant registry entries to stable semantic roles using the ESPHome platform, entity domain and original entity name. User-renamed Home Assistant entity IDs therefore do not form part of the semantic contract.
 
-Contract 1 currently defines 84 required Controller-side roles and 38 optional roles. Optional roles are grouped into explicit capabilities and do not invalidate the Charger Instance when absent.
+Contract 1 currently defines 84 required Controller-side roles and 137 optional roles. Optional roles are grouped into explicit capabilities and do not invalidate the Charger Instance when absent.
 
 The backend refreshes the active runtime mapping after Home Assistant entity-registry changes. Diagnostics expose that active runtime mapping and hash entity unique IDs before including them in diagnostic output.
 
@@ -228,8 +228,13 @@ Optional capabilities:
 
 - advanced charger telemetry and controls
 - per-rectifier fan control
+- per-rectifier alarm/status telemetry
 - external chassis cooling
 - Controller diagnostics
+
+The optional per-rectifier alarm/status capability exposes the raw Huawei register `0x0183` value together with all 32 documented alarm/status bits for Rectifier Units 1-3. These roles are read-only diagnostic telemetry. The backend does not interpret them as Charger safety decisions and does not use them to authorize or block controls.
+
+The bit meanings follow the Huawei reference mapping used by the Charger Controller firmware. Only a subset can be safely reproduced and independently verified on the R4875G1; the remaining mappings are retained as documented reference telemetry.
 
 External battery-bank discovery remains a later milestone because those entities are owned by other Home Assistant integrations rather than the Charger Controller.
 
