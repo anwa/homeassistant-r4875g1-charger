@@ -288,7 +288,7 @@ def _rectifier_alarm_status_role_specs(unit: int) -> tuple[RoleSpec, ...]:
         *(
             RoleSpec(
                 f"{prefix}.{role_suffix}",
-                "binary_sensor",
+                "sensor",
                 f"{original_name} {suffix}",
                 CAPABILITY_RECTIFIER_ALARM_STATUS,
                 required=False,

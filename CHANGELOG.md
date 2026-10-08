@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.1
+
+Rectifier alarm/status role-domain compatibility fix.
+
+- resolve the 32 per-Rectifier alarm/status bit roles from Home Assistant `sensor` entities
+- align Backend API semantic role discovery with the Charger Controller's numeric `0.0` / `1.0` alarm/status telemetry
+- restore the optional `rectifier_alarm_status` capability from partial to available when all Controller entities are present
+- avoid unnecessary Charger Controller entity-domain changes
+- keep alarm/status telemetry read-only and diagnostic-only
+
+No Backend API role names or control behavior changed in this release.
+
 ## 1.4.0
 
 Rectifier alarm/status telemetry milestone.
