@@ -81,6 +81,7 @@ This repository is one part of a project family. The sibling repositories are ex
 
 ### Cross-repository rules
 
-- A new or changed role specification must match the firmware entity name and domain. Check the firmware packages and `ENTITY_CONTRACT.md` in the same task.
+- A new or changed role specification must match the firmware entity name and domain. Check the firmware packages and `ENTITY_CONTRACT.md` in the same task, and run the cross-repository contract check from the firmware repository: `../esphome-r4875g1-3phase-charger/.venv/Scripts/python.exe ../esphome-r4875g1-3phase-charger/scripts/check-contract.py`.
+- A role domain change also changes its state values, for example from `on`/`off` to numeric strings. Review every dashboard consumer that interprets the role state.
 - A Backend API v1 change must be checked against the dashboard API client and types in the same task.
 - Each repository keeps its own versioning, changelog and validation rules. Apply the rules of the repository being changed.
