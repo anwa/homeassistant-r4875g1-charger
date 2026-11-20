@@ -71,6 +71,16 @@ This repository is one part of a project family. The sibling repositories are ex
 | `homeassistant-r4875g1-charger` | `.` | Home Assistant integration; resolves Controller entities into semantic roles and exposes Backend API v1 |
 | `r4875g1-charger-dashboard` | `../r4875g1-charger-dashboard` | Dashboard card and Grafana history dashboard; consumes Backend API semantic roles |
 
-- The contract chain is: firmware entities -> `ENTITY_CONTRACT.md` -> integration roles / Backend API -> dashboard.
-- A change to role specifications, entity domains or Backend API behavior must check the firmware contract and the dashboard consumers in the same task.
+### Contract surfaces
+
+- `../esphome-r4875g1-3phase-charger/HomeAssistant/ENTITY_CONTRACT.md` is the authoritative description of the Controller entity contract.
+- Upstream: role specifications bind Controller entities by entity domain and original entity name, which is the ESPHome `name:` in the firmware packages. A firmware rename or domain change breaks role resolution even when firmware behavior is unchanged.
+- Contract marker: the Controller publishes `R4875G1 Charger Contract` from `packages/controller/ha-contract.yaml`. This integration accepts the versions in `SUPPORTED_CONTRACT_VERSIONS` in `const.py`. An incompatible contract change requires a new contract version on both sides.
+- Downstream: the dashboard card consumes Backend API v1 through `../r4875g1-charger-dashboard/src/api/client.ts` and `src/api/types.ts`.
+- Not through this integration: the Grafana history dashboard and the Remote HMI firmware read Controller entity IDs directly. Changes in this repository do not affect them, but contract changes discussed here may.
+
+### Cross-repository rules
+
+- A new or changed role specification must match the firmware entity name and domain. Check the firmware packages and `ENTITY_CONTRACT.md` in the same task.
+- A Backend API v1 change must be checked against the dashboard API client and types in the same task.
 - Each repository keeps its own versioning, changelog and validation rules. Apply the rules of the repository being changed.
