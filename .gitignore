@@ -5,3 +5,6 @@ __pycache__/
 .venv/
 venv/
 *.patch
+
+# Claude Code per-user settings
+.claude/settings.local.json
