@@ -4,9 +4,21 @@
 
 These rules apply to the complete `homeassistant-r4875g1-charger` repository.
 
-## Language
+## Inherited Rules
 
-- Source code, comments, commit messages, changelog entries and project documentation are written in English.
+This repository lives in a rule hierarchy. Apply these files in addition to the rules below, in this order of increasing precedence:
+
+| Level | File | Applies to |
+|---|---|---|
+| Global | `../../../../AGENTS.md` | everything: language, Git authority, branches, commits, versioning principles, documentation style, evidence |
+| ESPHome | `../../../AGENTS.md` | only its "HMI Over Home Assistant" principles |
+
+The Waveshare rules (`../../AGENTS.md`) do not apply to this repository. This file contains only what is specific to this repository and takes precedence over the inherited files.
+
+If the inherited files are not present, for example in a fresh clone: write all repository content in English, never commit secrets, and never push, tag or publish without the user's approval.
+
+## Translations
+
 - Home Assistant user-interface translations are maintained in at least English and German.
 - When a user-facing string changes, `custom_components/r4875g1_charger/translations/en.json` and `de.json` must be checked and kept in sync.
 
@@ -27,39 +39,22 @@ These rules apply to the complete `homeassistant-r4875g1-charger` repository.
 - A breaking Backend API change requires a new major version. The assistant must propose and discuss a major version with the user before applying it.
 - The integration version, Controller firmware version and Home Assistant Contract version are independent.
 
-## Change workflow
+## Local checks
 
-- Work in small, reviewable functional steps.
-- Before implementing a change, inspect the current local branch and relevant repository rules.
-- Edit files directly in the local working tree. Keep each change limited to the current concern and review the resulting diff before reporting it as complete.
-- Before committing a change, run the local checks and report the results:
-  - `py -3.13 -m compileall -q custom_components`
-  - JSON validation of `manifest.json`, `translations/*.json` and `hacs.json`
-  - `git diff --check`
-- HACS validation runs in GitHub Actions and is not available locally.
-- Do not claim runtime testing that has not actually been performed in Home Assistant.
-- Provide a patch that passes `git apply --check` only when the user asks for one or the working tree cannot be edited directly.
+Before committing a change, run these checks and report the results:
 
-## Repository access
+- `py -3.13 -m compileall -q custom_components`
+- JSON validation of `manifest.json`, `translations/*.json` and `hacs.json`
+- `git diff --check`
 
-- Treat GitHub as read-only for the assistant. Do not perform repository mutations through GitHub or a GitHub integration.
-- The assistant may create a local feature branch and local commits when the user asks for commits. Do not commit directly on `main` unless the user says so.
-- The assistant must not push, merge into `main`, create or move tags, publish GitHub Releases, delete branches or rewrite commits that already exist on the remote. The user performs these steps.
+HACS validation runs in GitHub Actions and is not available locally.
 
-## Versioning
+## Versioning and releases
 
 - The integration version is defined in `custom_components/r4875g1_charger/manifest.json`.
-- Every commit that changes runtime behavior, source code, packaging or other functionality must increase the version.
-- Documentation-only commits may omit a version increase.
-- Use a patch increment for small fixes and narrowly scoped changes, and a minor increment for new capabilities or larger backward-compatible milestones.
-- Do not defer a required version increment to a later commit.
 - Update `CHANGELOG.md` in the same commit as the version increase.
-
-## Release workflow
-
-- The version in `manifest.json`, the Git tag and the published GitHub Release use the same number, for example `1.4.1` -> `v1.4.1`.
-- Any version intended to be offered through HACS must be published as a full GitHub Release; a tag alone is not sufficient.
-- The user performs the merge, tag and GitHub Release. The assistant provides the release material: commit message or local commit, merge commands, tag command and message, release title, release notes and verification commands.
+- The version in `manifest.json`, the Git tag and the GitHub Release use the same number, for example `1.4.1` -> `v1.4.1`.
+- Any version intended to be offered through HACS must be published as a full GitHub Release; a tag alone is not sufficient. Releases are published with the user's approval, as defined by the global Git authority rules.
 
 ## Related repositories
 
